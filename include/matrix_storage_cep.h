@@ -1,7 +1,7 @@
 #pragma once
 #include "type.h"
 #include "value_compare.h"
-#include "config.h"
+#include "matrix_storage_cep_config.h"
 #include <vector>
 #include <cassert>
 #include <algorithm>
