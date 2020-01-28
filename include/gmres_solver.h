@@ -76,10 +76,9 @@ private:
         if (m == restart_m) {
           result = x0 + Vm * mm * q1 * beta;
         }
-        if (value_equal(value_type(0), h_mplus_m) == false) {
-          Vm.resize(A.get_row(), m + 1);
-          Vm.set_column(m + 1, wm / h_mplus_m);
-        }
+        assert(value_equal(value_type(0), h_mplus_m) == false);
+        Vm.resize(A.get_row(), m + 1);
+        Vm.set_column(m + 1, wm / h_mplus_m);
       }
       x0 = std::move(result);
     }

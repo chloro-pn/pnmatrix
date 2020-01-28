@@ -1,6 +1,7 @@
 #include "../include/matrix.h"
 #include "../include/matrix_storage_cep.h"
 #include "../include/gmres_solver.h"
+#include "../include/gauss_seidel_solver.h"
 #include "../include/jacobian_solver.h"
 #include <iostream>
 
@@ -80,7 +81,38 @@ void jacobian_example() {
   std::cout << "###\n";
 }
 
-int main(int argc, char* argv[]) {
+void gauss_seidel_example() {
+  matrix<matrix_storage_cep<double>> m(3, 3);
+  m.set_value(1, 1, 8);
+  m.set_value(1, 2, -3);
+  m.set_value(1, 3, 2);
+  m.set_value(2, 1, 4);
+  m.set_value(2, 2, 11);
+  m.set_value(2, 3, -1);
+  m.set_value(3, 1, 6);
+  m.set_value(3, 2, 3);
+  m.set_value(3, 3, 12);
+  std::cout << "example jacobian.\n";
+  std::cout << "matrix A : \n";
+  print_matrix(m);
+  matrix<matrix_storage_cep<double>> b(3, 1);
+  b.set_value(1, 1, 20);
+  b.set_value(2, 1, 33);
+  b.set_value(3, 1, 36);
+  std::cout << "matrix b : \n";
+  print_matrix(b);
+  std::cout << "use gauss seidel method to solve A * x = b : \n";
+  gauss_seidel::option op;
+  op.rm = 1e-6;
+  std::cout << "rm : "<< op.rm << std::endl;
+  gauss_seidel solver(op);
+  std::cout << "result : x \n";
+  auto result = solver.solve(m, b);
+  print_matrix(result);
+  std::cout << "###\n";
+}
+
+int main1(int argc, char* argv[]) {
   gmres_example();
   jacobian_example();
   return 0;

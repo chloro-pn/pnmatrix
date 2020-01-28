@@ -8,7 +8,7 @@
 #include <iostream>
 
 namespace pnmatrix {
-class jacobian {
+class gauss_seidel {
 private:
   double rm_;
 
@@ -17,7 +17,7 @@ public:
     double rm = 1e-6;
   };
 
-  jacobian(option op):rm_(op.rm) {
+  gauss_seidel(option op):rm_(op.rm) {
 
   }
 
@@ -34,9 +34,16 @@ public:
         double sum = 0;
         size_type row = row_iter.row_index();
         for (auto colu_iter = row_iter.begin(); colu_iter != row_iter.end(); ++colu_iter) {
-          sum += (*colu_iter) * x_prev.get_value(colu_iter.column_index(), 1);
+          if (colu_iter.column_index() < row) {
+            sum += (*colu_iter) * x_next.get_value(colu_iter.column_index(), 1);
+          }
+          else if(colu_iter.column_index() >= row + 1){
+            sum += (*colu_iter) * x_prev.get_value(colu_iter.column_index(), 1);
+          }
         }
-        result = b.get_value(row, 1) - sum + coeff.get_value(row, row) * x_prev.get_value(row, 1);
+
+        result = b.get_value(row, 1) - sum;
+
         double t = coeff.get_value(row, row);
         result = result / t;
         if (value_equal(t, 0.0) == true) {
@@ -46,7 +53,7 @@ public:
           x_next.set_value(row, 1, result);
         }
       }
-      double max_err = max_error(coeff * x_next, b);
+      double max_err = max_error(x_prev, x_next);
       if (max_err <= rm_) {
         break;
       }
@@ -60,8 +67,8 @@ public:
 
 private:
   template<class MatrixType>
-  double max_error(const MatrixType& m1,const MatrixType& m2) {
-    assert(m1.get_row() == m2.get_row() && m1.get_column() == m2.get_column());
+  double max_error(MatrixType& m1, MatrixType& m2) {
+    assert(m1.get_column() == m2.get_column() && m1.get_row() == m1.get_row());
     double max_err = 0;
     for (size_type row = 1; row <= m1.get_row(); ++row) {
       for (size_type colu = 1; colu <= m1.get_column(); ++colu) {
@@ -76,4 +83,3 @@ private:
   }
 };
 }
-
