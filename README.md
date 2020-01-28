@@ -1,7 +1,13 @@
 # pnmatrix
 a library for solving linear equations based on c++11.
 
-GMRES-m algorithm is currently supported.
+support:
+
+* Gmres-m.
+
+* Jacobi iteration.
+
+* Gauss-seidel iteration.
 
 # license
 Use of this code is governed by a MIT license that can be found in the License file.
