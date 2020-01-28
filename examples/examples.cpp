@@ -112,8 +112,9 @@ void gauss_seidel_example() {
   std::cout << "###\n";
 }
 
-int main1(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   gmres_example();
   jacobian_example();
+  gauss_seidel_example();
   return 0;
 }
