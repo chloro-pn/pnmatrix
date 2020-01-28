@@ -1,6 +1,3 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
 
 #define DELETE_ZERO
-
-#endif // CONFIG_H

@@ -1,14 +1,14 @@
 #include "../include/matrix_storage_cep.h"
 #include "../include/matrix.h"
-#include "../include/calculator.h"
+#include "../include/gmres_solver.h"
 #include "../include/value_compare.h"
 
 #include "../third_party/catch.hpp"
 
 /*
- * 1    1    1     6      1
- * 0    4   -1  *  5  ==  2
- * 2   -2    1     1      3
+ * 1    1    1     3      6
+ * 0    4   -1  *  2  ==  5
+ * 2   -2    1     1      1
  */
 
 using namespace pnmatrix;
