@@ -92,7 +92,7 @@ void gauss_seidel_example() {
   m.set_value(3, 1, 6);
   m.set_value(3, 2, 3);
   m.set_value(3, 3, 12);
-  std::cout << "example jacobian.\n";
+  std::cout << "example gauss seidel.\n";
   std::cout << "matrix A : \n";
   print_matrix(m);
   matrix<matrix_storage_cep<double>> b(3, 1);
