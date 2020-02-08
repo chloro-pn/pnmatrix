@@ -2,6 +2,8 @@
 #include "type.h"
 #include "value_compare.h"
 #include <cassert>
+#include <cstdio>
+#include <cstdlib>
 #include <utility>
 
 namespace pnmatrix {
@@ -36,6 +38,10 @@ MatrixType get_household_matrix(const MatrixType& vector) {
 
 template<class MatrixType>
 std::pair<MatrixType, MatrixType> QR(const MatrixType& matrix) {
+  if(matrix.get_row() <= matrix.get_column()) {
+      fprintf(stderr,"qr decomposition needs matrix(m > n)");
+      std::abort();
+  }
   MatrixType R(matrix);
   MatrixType Q = MatrixType::get_identity_matrix(matrix.get_row());
   for (size_type i = 1; i <= matrix.get_column(); ++i) {
