@@ -45,8 +45,7 @@ private:
         H.resize(m + 1, m);
         MatrixType vsm = Vm.get_nth_column(m);
         MatrixType wm = A * vsm;
-        MatrixType wmt = wm;
-        wmt = wmt.get_transposition();
+        MatrixType wmt = tr(wm);
         for (size_type i = 1; i <= m; ++i) {
           MatrixType vsi = Vm.get_sub_matrix(1, Vm.get_row(), i, 1);
           H.set_value(i, m, wmt.get_vector_inner_product(vsi));
@@ -85,3 +84,4 @@ private:
   }
 };
 }
+

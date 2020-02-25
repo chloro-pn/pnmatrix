@@ -1,33 +1,38 @@
 #pragma once
 #include "type.h"
+#include "operator_proxy.h"
 #include "value_compare.h"
+#include "matrix_type.h"
 #include <functional>
 #include <cassert>
 #include <cmath>
+#include <type_traits>
+#include <memory>
 
 namespace pnmatrix {
 template<class Container>
 class matrix {
 public:
-  using value_type = typename Container::value_type;
-  using row_iterator = typename Container::row_iterator;
-  using column_iterator = typename Container::row_iterator::column_iterator;
-  using const_row_iterator = typename Container::const_row_iterator;
-  using const_column_iterator = typename Container::const_row_iterator::const_column_iterator;
+  using container_type = Container;
+  using value_type = typename container_type::value_type;
+  using row_iterator = typename container_type::row_iterator;
+  using column_iterator = typename container_type::row_iterator::column_iterator;
+  using const_row_iterator = typename container_type::const_row_iterator;
+  using const_column_iterator = typename container_type::const_row_iterator::const_column_iterator;
 
 public:
   matrix() = default;
 
   matrix(size_type row,size_type column):container_(row, column) {}
 
-  template<class StorageType>
-  explicit matrix(const StorageType& shadow):container_(shadow){}
-
   ~matrix() = default;
 
   matrix(const matrix& other):container_(other.container_) {}
 
   matrix(matrix&& other):container_(std::move(other.container_)) {}
+
+  template <typename Proxy>
+  matrix(const Proxy& pro);
 
   matrix& operator=(const matrix& other) {
     container_ = other.container_;
@@ -193,71 +198,6 @@ public:
     return true;
   }
 
-  matrix operator/(value_type value) const {
-    matrix result(get_row(), get_column());
-    every_nozero_element([&](const_column_iterator iter)->void {
-      result.set_value(iter.row_index(), iter.column_index(), *iter / value);
-    });
-    return result;
-  }
-  
-  matrix operator*(value_type value) const {
-    matrix result(get_row(), get_column());
-    every_nozero_element([&] (const_column_iterator iter)->void {
-      result.set_value(iter.row_index(), iter.column_index(), *iter * value);
-    });
-    return result;
-  }
-
-  matrix operator*(const matrix& m) const {
-    assert(get_column() == m.get_row());
-    matrix result(get_row(), m.get_column());
-    for (auto row = begin(); row!= end(); ++row) {
-      for (size_type i = 1; i <= m.get_column(); ++i) {
-        value_type sum = value_type(0);
-        size_type row_ = row.row_index();
-        size_type colu_ = i;
-        for (auto col = row.begin(); col != row.end(); ++col) {
-          sum += *col * m.get_value_withoutcheck(col.column_index(), i);
-        }
-        result.set_value(row_, colu_, sum);
-      }
-    }
-    return result; 
-  }
-  
-  matrix operator-(const matrix& m) const {
-    assert(get_row() == m.get_row() && get_column() == m.get_column());
-    matrix result(get_row(), get_column());
-    for (auto row_iter = begin(); row_iter != end(); ++row_iter) {
-      for (auto colu_iter = row_iter.begin(); colu_iter != row_iter.end(); ++colu_iter) {
-        result.set_value_withoutcheck(colu_iter.row_index(), colu_iter.column_index(), *colu_iter);
-      }
-    }
-    for (auto row_iter = m.begin(); row_iter != m.end(); ++row_iter) {
-      for (auto colu_iter = row_iter.begin(); colu_iter != row_iter.end(); ++colu_iter) {
-        result.add_value_withoutcheck(colu_iter.row_index(), colu_iter.column_index(), - *colu_iter);
-      }
-    }
-    return result;
-  }
- 
-  matrix operator+(const matrix& m) const {
-      assert(get_row() == m.get_row() && get_column() == m.get_column());
-      matrix result(get_row(), get_column());
-      for (auto row_iter = begin(); row_iter != end(); ++row_iter) {
-        for (auto colu_iter = row_iter.begin(); colu_iter != row_iter.end(); ++colu_iter) {
-          result.set_value_withoutcheck(colu_iter.row_index(), colu_iter.column_index(), *colu_iter);
-        }
-      }
-      for (auto row_iter = m.begin(); row_iter != m.end(); ++row_iter) {
-        for (auto colu_iter = row_iter.begin(); colu_iter != row_iter.end(); ++colu_iter) {
-          result.add_value_withoutcheck(colu_iter.row_index(), colu_iter.column_index(), *colu_iter);
-        }
-      }
-      return result;
-  }
-
   value_type get_vector_second_norm() const {
     assert(get_column() == 1);
     value_type sum = value_type(0);
@@ -280,16 +220,6 @@ public:
     return sum;
   }
 
-  matrix get_transposition() const {
-    matrix result(get_column(), get_row());
-    for (auto row_iter = begin(); row_iter != end(); ++row_iter) {
-      for (auto colu_iter = row_iter.begin(); colu_iter != row_iter.end(); ++colu_iter) {
-        result.set_value_withoutcheck(colu_iter.column_index(), colu_iter.row_index(), *colu_iter);
-      }
-    }
-    return result;
-  }
-
   size_type get_nth_row_size(size_type row) const {
     row_range_check(row);
     return container_.get_nth_row_size(row);
@@ -301,12 +231,6 @@ public:
     }
     assert(row >= 1 && column >= 1);
     container_.resize(row, column);
-  }
-
-  void multi(value_type value) {
-    every_nozero_element([&](column_iterator iter)->void {
-      *iter = *iter * value;
-    });
   }
 
   void every_nozero_element(const std::function<void(const_column_iterator iterator)>& func) const {
@@ -398,4 +322,184 @@ private:
     return container_.get_value(row, column);
   }
 };
+
+template <bool b1, bool b2>
+struct both_real : std::false_type {};
+
+template <>
+struct both_real<true, true> : std::true_type {};
+
+template<typename Proxy1, typename Proxy2,
+  typename std::enable_if<
+    both_real<
+     std::disjunction<
+       is_op_type<Proxy1>,
+       is_dense_matrix<Proxy1>>::value,
+     std::disjunction<
+       is_op_type<Proxy2>,
+       is_dense_matrix<Proxy2>>::value
+    >::value, int>::type = 0>
+auto operator+(const Proxy1& m1, const Proxy2& m2)->op_add<Proxy1, Proxy2> {
+  assert(m1.get_row() == m2.get_row());
+  assert(m1.get_column() == m2.get_column());
+  return op_add<Proxy1, Proxy2>(m1, m2, m1.get_row(), m1.get_column());
+}
+
+template<typename MatrixType, typename std::enable_if<is_sparse_matrix<MatrixType>::value, int>::type = 0>
+auto operator+(const MatrixType& m1, const MatrixType& m2)->MatrixType {
+  assert(m1.get_row() == m2.get_row() && m1.get_column() == m2.get_column());
+  MatrixType result(m1.get_row(), m1.get_column());
+  for (auto row_iter = m1.begin(); row_iter != m1.end(); ++row_iter) {
+    for (auto colu_iter = row_iter.begin(); colu_iter != row_iter.end(); ++colu_iter) {
+      result.set_value(colu_iter.row_index(), colu_iter.column_index(), *colu_iter);
+    }
+  }
+  for (auto row_iter = m2.begin(); row_iter != m2.end(); ++row_iter) {
+    for (auto colu_iter = row_iter.begin(); colu_iter != row_iter.end(); ++colu_iter) {
+      result.add_value(colu_iter.row_index(), colu_iter.column_index(), *colu_iter);
+    }
+  }
+  return result;
+}
+
+template<typename Proxy1, typename Proxy2,
+  typename std::enable_if<
+    both_real<
+     std::disjunction<
+       is_op_type<Proxy1>,
+       is_dense_matrix<Proxy1>>::value,
+     std::disjunction<
+       is_op_type<Proxy2>,
+       is_dense_matrix<Proxy2>>::value
+    >::value, int>::type = 0>
+auto operator-(const Proxy1& m1, const Proxy2& m2)->op_sub<Proxy1, Proxy2> {
+  assert(m1.get_row() == m2.get_row());
+  assert(m1.get_column() == m2.get_column());
+  return op_sub<Proxy1, Proxy2>(m1, m2, m1.get_row(), m1.get_column());
+}
+
+template<typename MatrixType, typename std::enable_if<is_sparse_matrix<MatrixType>::value, int>::type = 0>
+auto operator-(const MatrixType& m1, const MatrixType& m2)->MatrixType {
+  assert(m1.get_row() == m2.get_row() && m1.get_column() == m2.get_column());
+  MatrixType result(m1.get_row(), m1.get_column());
+  for (auto row_iter = m1.begin(); row_iter != m1.end(); ++row_iter) {
+    for (auto colu_iter = row_iter.begin(); colu_iter != row_iter.end(); ++colu_iter) {
+      result.set_value(colu_iter.row_index(), colu_iter.column_index(), *colu_iter);
+    }
+  }
+  for (auto row_iter = m2.begin(); row_iter != m2.end(); ++row_iter) {
+    for (auto colu_iter = row_iter.begin(); colu_iter != row_iter.end(); ++colu_iter) {
+      result.add_value(colu_iter.row_index(), colu_iter.column_index(), - *colu_iter);
+    }
+  }
+  return result;
+}
+
+template<typename Proxy1, typename Proxy2,
+  typename std::enable_if<
+    both_real<
+     std::disjunction<
+       is_op_type<Proxy1>,
+       is_dense_matrix<Proxy1>>::value,
+     std::disjunction<
+       is_op_type<Proxy2>,
+       is_dense_matrix<Proxy2>>::value
+    >::value, int>::type = 0>
+auto operator*(const Proxy1& m1, const Proxy2& m2)->op_mul<Proxy1, Proxy2> {
+  assert(m1.get_column() == m2.get_row());
+  return op_mul<Proxy1, Proxy2>(m1, m2, m1.get_row(), m2.get_column());
+}
+
+template<typename MatrixType, typename MatrixType2,
+         typename std::enable_if<std::conjunction<is_sparse_matrix<MatrixType>,
+                                                  is_matrix_type<MatrixType2>>::value, int>::type = 0>
+auto operator*(const MatrixType& m1, const MatrixType2& m2)->MatrixType2 {
+  assert(m1.get_column() == m2.get_row());
+  using value_type = typename MatrixType::value_type;
+  static_assert (std::is_same<value_type, typename MatrixType2::value_type>::value,"error.");
+
+  MatrixType2 result(m1.get_row(), m2.get_column());
+  for (auto row = m1.begin(); row!= m1.end(); ++row) {
+    for (size_type i = 1; i <= m2.get_column(); ++i) {
+      value_type sum = value_type(0);
+      size_type row_ = row.row_index();
+      size_type colu_ = i;
+      for (auto col = row.begin(); col != row.end(); ++col) {
+        sum += *col * m2.get_value(col.column_index(), i);
+      }
+      result.set_value(row_, colu_, sum);
+    }
+  }
+  return result;
+}
+
+template<typename MatrixType, typename std::enable_if<is_sparse_matrix<MatrixType>::value, int>::type = 0>
+MatrixType operator/(const MatrixType& m, typename MatrixType::value_type value) {
+  MatrixType result(m.get_row(), m.get_column());
+  m.every_nozero_element([&](typename MatrixType::const_column_iterator iter)->void {
+    result.set_value(iter.row_index(), iter.column_index(), *iter / value);
+  });
+  return result;
+}
+
+template<typename MatrixType, typename std::enable_if<is_sparse_matrix<MatrixType>::value, int>::type = 0>
+MatrixType operator*(const MatrixType& m, typename MatrixType::value_type value) {
+  MatrixType result(m.get_row(), m.get_column());
+  m.every_nozero_element([&] (typename MatrixType::const_column_iterator iter)->void {
+    result.set_value(iter.row_index(), iter.column_index(), *iter * value);
+  });
+  return result;
+}
+
+template<typename Proxy, typename std::enable_if<
+           std::disjunction<
+             is_op_type<Proxy>,
+             is_dense_matrix<Proxy>>::value, int>::type = 0>
+auto operator/(const Proxy& m, typename Proxy::value_type value)->op_div_value<Proxy> {
+  return op_div_value<Proxy>(m, value, m.get_row(), m.get_column());
+}
+
+template<typename Proxy, typename std::enable_if<
+           std::disjunction<
+             is_op_type<Proxy>,
+             is_dense_matrix<Proxy>>::value, int>::type = 0>
+auto operator*(const Proxy& m, typename Proxy::value_type value)->op_mul_value<Proxy> {
+  return op_mul_value<Proxy>(m, value, m.get_row(), m.get_column());
+}
+
+template<typename Proxy, typename std::enable_if<
+           std::disjunction<
+             is_op_type<Proxy>,
+             is_dense_matrix<Proxy>>::value, int>::type = 0>
+op_tr<Proxy> tr(const Proxy& m) {
+  return op_tr<Proxy>(m, m.get_column(), m.get_row());
+}
+
+template<typename MatrixType, typename std::enable_if<is_sparse_matrix<MatrixType>::value, int>::type = 0>
+MatrixType tr(const MatrixType& m) {
+  MatrixType result(m.get_column(), m.get_row());
+  for (auto row_iter = m.begin(); row_iter != m.end(); ++row_iter) {
+    for (auto colu_iter = row_iter.begin(); colu_iter != row_iter.end(); ++colu_iter) {
+      result.set_value(colu_iter.column_index(), colu_iter.row_index(), *colu_iter);
+    }
+  }
+  return result;
+}
+
+template <typename MatrixType, typename Proxy,
+          typename std::enable_if<is_dense_matrix<MatrixType>::value, int>::type = 0>
+void construct_from_proxy(MatrixType& self, const Proxy& pro) {
+  for(int i = 1; i <= self.get_row(); ++i) {
+    for(int j = 1; j <= self.get_column(); ++j) {
+      self.set_value(i, j, pro.get_value(i, j));
+    }
+  }
+}
+
+template <typename Container>
+template <typename Proxy>
+matrix<Container>::matrix(const Proxy& pro):container_(pro.get_row(), pro.get_column()) {
+  construct_from_proxy(*this, pro);
+}
+
 }

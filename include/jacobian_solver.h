@@ -46,7 +46,8 @@ public:
           x_next.set_value(row, 1, result);
         }
       }
-      double max_err = max_error(coeff * x_next, b);
+      MatrixType tmp = coeff * x_next;
+      double max_err = max_error(tmp, b);
       if (max_err <= rm_) {
         break;
       }

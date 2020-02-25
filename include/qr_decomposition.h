@@ -27,12 +27,12 @@ MatrixType get_household_matrix(const MatrixType& vector) {
     MatrixType w(vector.get_row(), vector.get_column());
     w.set_value(2, 1, 1);
     MatrixType H = MatrixType::get_identity_matrix(vector.get_row());
-    return H - w * w.get_transposition() * 2;
+    return H - w * tr(w) * 2;
   }
   MatrixType x_au = vector - tmp;
   MatrixType w = x_au / x_au.get_vector_second_norm();
   MatrixType H = MatrixType::get_identity_matrix(vector.get_row());
-  H = H - w * w.get_transposition() * 2;
+  H = H - w * tr(w) * 2;
   return H;
 }
 

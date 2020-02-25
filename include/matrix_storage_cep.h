@@ -1,6 +1,7 @@
 #pragma once
 #include "type.h"
 #include "value_compare.h"
+#include "matrix_type.h"
 #include "matrix_storage_cep_config.h"
 #include <vector>
 #include <cassert>
@@ -8,7 +9,7 @@
 
 namespace pnmatrix {
 template<class ValueType>
-class matrix_storage_cep {
+class matrix_storage_cep : public dense_container {
 public:
   using value_type = ValueType;
 
@@ -94,7 +95,7 @@ public:
     }
     else {
       row_root.push_back(node_(column, value));
-      //ÅÅÐò
+      //æŽ’åº
       std::sort(row_root.begin(), row_root.end(),
         [](const node_& n1, const node_& n2)->bool {
           return n1.column_ < n2.column_;
@@ -155,7 +156,7 @@ public:
     }
     else {
       row_root.push_back(node_(column, value));
-      //ÅÅÐò
+      //æŽ’åº
       std::sort(row_root.begin(), row_root.end(),
         [](const node_& n1, const node_& n2)->bool {
         return n1.column_ < n2.column_;
