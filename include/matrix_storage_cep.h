@@ -9,7 +9,7 @@
 
 namespace pnmatrix {
 template<class ValueType>
-class matrix_storage_cep : public dense_container {
+class matrix_storage_cep : public sparse_container {
 public:
   using value_type = ValueType;
 
