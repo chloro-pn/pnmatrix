@@ -24,7 +24,7 @@ cd build
 cmake ..
 make
 ```
-Then you can find executalbes in folder build/bin. Try to execute them:)
+Then you can find executables in folder build/bin. Try to execute them:)
 ```
 cd bin
 ./pnmatrix_example
