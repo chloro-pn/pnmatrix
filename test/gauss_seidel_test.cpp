@@ -1,4 +1,4 @@
-#include "../include/matrix_storage_cep.h"
+#include "../include/matrix_storage_block.h"
 #include "../include/matrix.h"
 #include "../include/gauss_seidel_solver.h"
 #include "../include/value_compare.h"
@@ -13,8 +13,8 @@
 
 using namespace pnmatrix;
 
-static matrix<matrix_storage_cep<double>> jacobian_test() {
-  matrix<matrix_storage_cep<double>> m(3, 3);
+static matrix<matrix_storage_block<double>> jacobian_test() {
+  matrix<matrix_storage_block<double>> m(3, 3);
   m.set_value(1, 1, 8);
   m.set_value(1, 2, -3);
   m.set_value(1, 3, 2);
@@ -25,7 +25,7 @@ static matrix<matrix_storage_cep<double>> jacobian_test() {
   m.set_value(3, 2, 3);
   m.set_value(3, 3, 12);
 
-  matrix<matrix_storage_cep<double>> b(3, 1);
+  matrix<matrix_storage_block<double>> b(3, 1);
   b.set_value(1, 1, 20);
   b.set_value(2, 1, 33);
   b.set_value(3, 1, 36);

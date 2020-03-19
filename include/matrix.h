@@ -2,7 +2,7 @@
 #include "type.h"
 #include "operator_proxy.h"
 #include "value_compare.h"
-#include "matrix_type.h"
+#include "matrix_type_traits.h"
 #include <functional>
 #include <cassert>
 #include <cmath>
@@ -323,21 +323,11 @@ private:
   }
 };
 
-template <bool b1, bool b2>
-struct both_real : std::false_type {};
-
-template <>
-struct both_real<true, true> : std::true_type {};
-
 template<typename Proxy1, typename Proxy2,
   typename std::enable_if<
     both_real<
-     std::disjunction<
-       is_op_type<Proxy1>,
-       is_dense_matrix<Proxy1>>::value,
-     std::disjunction<
-       is_op_type<Proxy2>,
-       is_dense_matrix<Proxy2>>::value
+             std::disjunction<is_op_type<Proxy1>,is_dense_matrix<Proxy1>>::value,
+             std::disjunction<is_op_type<Proxy2>,is_dense_matrix<Proxy2>>::value
     >::value, int>::type = 0>
 auto operator+(const Proxy1& m1, const Proxy2& m2)->op_add<Proxy1, Proxy2> {
   assert(m1.get_row() == m2.get_row());
@@ -365,12 +355,8 @@ auto operator+(const MatrixType& m1, const MatrixType& m2)->MatrixType {
 template<typename Proxy1, typename Proxy2,
   typename std::enable_if<
     both_real<
-     std::disjunction<
-       is_op_type<Proxy1>,
-       is_dense_matrix<Proxy1>>::value,
-     std::disjunction<
-       is_op_type<Proxy2>,
-       is_dense_matrix<Proxy2>>::value
+      std::disjunction<is_op_type<Proxy1>,is_dense_matrix<Proxy1>>::value,
+      std::disjunction<is_op_type<Proxy2>,is_dense_matrix<Proxy2>>::value
     >::value, int>::type = 0>
 auto operator-(const Proxy1& m1, const Proxy2& m2)->op_sub<Proxy1, Proxy2> {
   assert(m1.get_row() == m2.get_row());
@@ -398,12 +384,8 @@ auto operator-(const MatrixType& m1, const MatrixType& m2)->MatrixType {
 template<typename Proxy1, typename Proxy2,
   typename std::enable_if<
     both_real<
-     std::disjunction<
-       is_op_type<Proxy1>,
-       is_dense_matrix<Proxy1>>::value,
-     std::disjunction<
-       is_op_type<Proxy2>,
-       is_dense_matrix<Proxy2>>::value
+      std::disjunction<is_op_type<Proxy1>,is_dense_matrix<Proxy1>>::value,
+      std::disjunction<is_op_type<Proxy2>,is_dense_matrix<Proxy2>>::value
     >::value, int>::type = 0>
 auto operator*(const Proxy1& m1, const Proxy2& m2)->op_mul<Proxy1, Proxy2> {
   assert(m1.get_column() == m2.get_row());
@@ -411,8 +393,9 @@ auto operator*(const Proxy1& m1, const Proxy2& m2)->op_mul<Proxy1, Proxy2> {
 }
 
 template<typename MatrixType, typename MatrixType2,
-         typename std::enable_if<std::conjunction<is_sparse_matrix<MatrixType>,
-                                                  is_matrix_type<MatrixType2>>::value, int>::type = 0>
+  typename std::enable_if<
+    std::conjunction<is_sparse_matrix<MatrixType>,is_matrix_type<MatrixType2>>::value,
+  int>::type = 0>
 auto operator*(const MatrixType& m1, const MatrixType2& m2)->MatrixType2 {
   assert(m1.get_column() == m2.get_row());
   using value_type = typename MatrixType::value_type;
@@ -452,25 +435,19 @@ MatrixType operator*(const MatrixType& m, typename MatrixType::value_type value)
 }
 
 template<typename Proxy, typename std::enable_if<
-           std::disjunction<
-             is_op_type<Proxy>,
-             is_dense_matrix<Proxy>>::value, int>::type = 0>
+  std::disjunction<is_op_type<Proxy>,is_dense_matrix<Proxy>>::value, int>::type = 0>
 auto operator/(const Proxy& m, typename Proxy::value_type value)->op_div_value<Proxy> {
   return op_div_value<Proxy>(m, value, m.get_row(), m.get_column());
 }
 
 template<typename Proxy, typename std::enable_if<
-           std::disjunction<
-             is_op_type<Proxy>,
-             is_dense_matrix<Proxy>>::value, int>::type = 0>
+  std::disjunction<is_op_type<Proxy>,is_dense_matrix<Proxy>>::value, int>::type = 0>
 auto operator*(const Proxy& m, typename Proxy::value_type value)->op_mul_value<Proxy> {
   return op_mul_value<Proxy>(m, value, m.get_row(), m.get_column());
 }
 
 template<typename Proxy, typename std::enable_if<
-           std::disjunction<
-             is_op_type<Proxy>,
-             is_dense_matrix<Proxy>>::value, int>::type = 0>
+  std::disjunction<is_op_type<Proxy>,is_dense_matrix<Proxy>>::value, int>::type = 0>
 op_tr<Proxy> tr(const Proxy& m) {
   return op_tr<Proxy>(m, m.get_column(), m.get_row());
 }
@@ -486,8 +463,8 @@ MatrixType tr(const MatrixType& m) {
   return result;
 }
 
-template <typename MatrixType, typename Proxy,
-          typename std::enable_if<is_dense_matrix<MatrixType>::value, int>::type = 0>
+template <typename MatrixType, typename Proxy,typename std::enable_if<
+  is_dense_matrix<MatrixType>::value, int>::type = 0>
 void construct_from_proxy(MatrixType& self, const Proxy& pro) {
   for(int i = 1; i <= self.get_row(); ++i) {
     for(int j = 1; j <= self.get_column(); ++j) {

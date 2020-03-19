@@ -1,7 +1,7 @@
 #pragma once
 #include "type.h"
 #include "value_compare.h"
-#include "matrix_type.h"
+#include "matrix_type_traits.h"
 #include "matrix_storage_cep_config.h"
 #include <vector>
 #include <cassert>
