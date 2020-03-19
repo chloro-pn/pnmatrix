@@ -1,5 +1,6 @@
 #pragma once
 #include "matrix_type_traits.h"
+#include "value_compare.h"
 #include "type.h"
 #include <vector>
 #include <cassert>
@@ -19,6 +20,24 @@ public:
   matrix_storage_block(matrix_storage_block&&) = default;
   matrix_storage_block& operator=(const matrix_storage_block&) = default;
   matrix_storage_block& operator=(matrix_storage_block&&) = default;
+
+  bool operator==(const matrix_storage_block& other) const {
+    if(get_row() != other.get_row() || get_column() != other.get_column()) {
+      return false;
+    }
+    for (int i = 1; i <= my_row_; ++i) {
+      for (int j = 1; j <= my_column_; ++j) {
+        if (value_equal(get_value(i, j), other.get_value(i, j)) == false) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  bool operator!=(const matrix_storage_block& other) const {
+    return !(*this == other);
+  }
 
   void set_value(size_type row, size_type column, const value_type& v) {
     block_[get_index(row, column)] = v;
@@ -73,6 +92,8 @@ public:
       }
     }
     block_.swap(tmp.block_);
+    my_row_ = new_row;
+    my_column_ = new_column;
   }
 
   class row_iterator {
