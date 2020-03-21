@@ -2,16 +2,27 @@
 #include "../include/matrix.h"
 #include "../include/matrix_storage_cep.h"
 #include "../include/value_compare.h"
+#include "../include/matrix_storage_block.h"
 
 using namespace pnmatrix;
 
 TEST_CASE("matrix set and get value test ","[matrix]") {
-  matrix<matrix_storage_cep<double>> m1(3, 3);
-  REQUIRE(value_equal(m1.get_value(1, 1), 0.0));
-  m1.set_value(2, 1, 1.05);
-  REQUIRE(value_equal(m1.get_value(2, 1), 1.05));
-  m1.add_value(2, 1, 1.1);
-  REQUIRE(value_equal(m1.get_value(2, 1), 1.05 + 1.1));
+  SECTION("cep") {
+    matrix<matrix_storage_cep<double>> m1(3, 3);
+    REQUIRE(value_equal(m1.get_value(1, 1), 0.0));
+    m1.set_value(2, 1, 1.05);
+    REQUIRE(value_equal(m1.get_value(2, 1), 1.05));
+    m1.add_value(2, 1, 1.1);
+    REQUIRE(value_equal(m1.get_value(2, 1), 1.05 + 1.1));
+  }
+  SECTION("block") {
+    matrix<matrix_storage_block<double>> m1(3, 3);
+    REQUIRE(value_equal(m1.get_value(1, 1), 0.0));
+    m1.set_value(2, 1, 1.05);
+    REQUIRE(value_equal(m1.get_value(2, 1), 1.05));
+    m1.add_value(2, 1, 1.1);
+    REQUIRE(value_equal(m1.get_value(2, 1), 1.05 + 1.1));
+  }
 }
 
 TEST_CASE("matrix iterator test", "[matrix]") {
