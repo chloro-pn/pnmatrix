@@ -98,16 +98,26 @@ TEST_CASE("matrix storage block iterator test", "[matrix_container]") {
   std::vector<double> nodes;
   m1.set_value(1, 1, 1.01);
   nodes.push_back(1.01);
+  nodes.push_back(0);
+  nodes.push_back(0);
   m1.set_value(1, 4, 2.12);
   nodes.push_back(2.12);
   m1.set_value(2, 1, 2.2);
   nodes.push_back(2.2);
+  nodes.push_back(0);
   m1.set_value(2, 3, 0.98);
   nodes.push_back(0.98);
+  nodes.push_back(0);
+  nodes.push_back(0);
+  nodes.push_back(0);
   m1.set_value(3, 3, 3.1);
   nodes.push_back(3.1);
+  nodes.push_back(0);
+  nodes.push_back(0);
   m1.set_value(4, 2, 1.04);
   nodes.push_back(1.04);
+  nodes.push_back(0);
+  nodes.push_back(0);
 
   auto iter = nodes.begin();
   for (auto row = m1.begin(); row != m1.end(); ++row) {
@@ -116,6 +126,7 @@ TEST_CASE("matrix storage block iterator test", "[matrix_container]") {
       ++iter;
     }
   }
+  REQUIRE(iter == nodes.end());
 }
 
 TEST_CASE("matrix storage block element row transform test","[matrix_container]") {

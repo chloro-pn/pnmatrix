@@ -13,8 +13,9 @@
 
 using namespace pnmatrix;
 
-static matrix<matrix_storage_cep<double>> jacobian_test() {
-  matrix<matrix_storage_cep<double>> m(3, 3);
+template<typename MatrixType>
+static MatrixType jacobian_test() {
+  MatrixType m(3, 3);
   m.set_value(1, 1, 8);
   m.set_value(1, 2, -3);
   m.set_value(1, 3, 2);
@@ -25,7 +26,7 @@ static matrix<matrix_storage_cep<double>> jacobian_test() {
   m.set_value(3, 2, 3);
   m.set_value(3, 3, 12);
 
-  matrix<matrix_storage_cep<double>> b(3, 1);
+  MatrixType b(3, 1);
   b.set_value(1, 1, 20);
   b.set_value(2, 1, 33);
   b.set_value(3, 1, 36);
@@ -37,8 +38,19 @@ static matrix<matrix_storage_cep<double>> jacobian_test() {
   return result;
 }
 
-TEST_CASE( "jacobian test", "[calculate]") {
-  auto x = jacobian_test();
+TEST_CASE( "jacobian cep test", "[calculate]") {
+  auto x = jacobian_test<matrix<matrix_storage_cep<double>>>();
+  REQUIRE(x.get_row() == 3);
+  REQUIRE(x.get_column() == 1);
+  REQUIRE(value_equal(x.get_value(1, 1), 3.0));
+  REQUIRE(value_equal(x.get_value(2, 1), 2.0));
+  REQUIRE(value_equal(x.get_value(3, 1), 1.0));
+}
+
+#include "../include/matrix_storage_block.h"
+
+TEST_CASE( "jacobian block test", "[calculate]") {
+  auto x = jacobian_test<matrix<matrix_storage_block<double>>>();
   REQUIRE(x.get_row() == 3);
   REQUIRE(x.get_column() == 1);
   REQUIRE(value_equal(x.get_value(1, 1), 3.0));

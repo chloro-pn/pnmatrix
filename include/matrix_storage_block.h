@@ -11,7 +11,7 @@ class matrix_storage_block : public dense_container {
 public:
   using value_type = ValueType;
 
-  matrix_storage_block(size_type row, size_type column):my_row_(row), my_column_(column) {
+  matrix_storage_block(size_type row, size_type column):my_row_(row), my_column_(column),block_row_(row),block_column_(column) {
     assert(row > 0 && column > 0);
     block_.resize(row * column, ValueType(0));
   }
@@ -94,6 +94,8 @@ public:
     block_.swap(tmp.block_);
     my_row_ = new_row;
     my_column_ = new_column;
+    block_row_ = new_row;
+    block_column_ = new_column;
   }
 
   class row_iterator {
@@ -316,10 +318,13 @@ private:
   size_type my_row_;
   size_type my_column_;
   std::vector<ValueType> block_;
+  //这两个值的作用是删除行或者列的时候保留block的映射关系。
+  size_type block_row_;
+  size_type block_column_;
 
   inline
   size_type get_index(size_type row, size_type column) const {
-    return (row - 1) * my_column_ + column - 1;
+    return (row - 1) * block_column_ + column - 1;
   }
 };
 
